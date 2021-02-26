@@ -1,0 +1,187 @@
+Stephen grider : forEach, map, filter, find, every, some, reduce	
+In short,
+	>> arr.forEach((item, i) => {})
+		
+		
+====
+
+ES5 for-loop
+		let arr = ['red', 'blue', 'pink']
+		for (var i=0; i<arr.length; i++){	//uses arr.length
+			console.log(arr[i]);
+		}
+
+Array methods:- (unlike lodash, these are inbuilt)
+	- foreach: using anon function, using function expression, using function declaration, using arrow functions.
+		//1. using anon function 
+		arr.forEach(function(x){	// the anon function is "iteration function"
+		})
+		
+		// 2. using named function-expression  :: use this !! or arrow functions !!
+		let arr = [10, 20, 30];
+		let sum = 0;
+		let adder = function(number){
+			sum += number;
+		}
+		arr.forEach(adder); // no function param.
+							// no ().
+		console.log(sum);   // 60
+		
+		
+		//3. using function declaration 
+		let arr = [10, 20, 30];
+		let sum = 0;
+		function adder (number){
+			sum += number;
+		}
+		arr.forEach(adder); // no function param.
+							// no ().
+		console.log(sum);   // 60
+		
+		// 4. 
+		let arr = [10, 20, 30];
+		let sum = 0;
+		let adder = (number) => sum += number;
+		arr.forEach(adder); // no function param.
+							// no ()
+		console.log(sum);
+
+	// index is also available.
+		let adder = (number, i) => { 
+		  sum += number;
+		  console.log('index is:', i);
+		}
+		arr.forEach(adder); // no function param.
+							// no ()
+
+	- map
+	>> has a return statement, but end output are ONLY the plucked-values, which is an array)
+	>> use it to run the same operation on all items in a list, to get a new list. (like multiply by 2)
+		>> return statement has to be there !!! (unless its a one liner arrow function)... VIMP!!! return-keyword should be there !!!
+		>> creates a new array reference 
+		>> if we had used forEach, then we would have to declare another array sum[] and then push into it. map-does it for us. 
+		>> use it if same operation is to be done on all items, and a new reference needs to be created.
+		>> Diff between map & forEach ===>> forEach does NOT return anything; forEach is just a better way to write for loops.
+		>> use it to pluck values from Arr. of Objs.; note its plucks ONLY values and not keys; it will return an arr. of values.
+		
+		let arr = [10, 20, 30]
+		let sum = arr.map((item) => {
+		  return item * 2;	// 20, 40, 60.
+		  // item * 2; // [undefined, undefined, undefined]
+		});
+		
+		-OR- use one liner arrow function 
+		
+		let sum = arr.map((item) => item * 2);
+		console.log (sum);
+		
+		Example 1: Array of objects: use map to pluck-values from an array of objects.		
+			let images = [
+			  { height: '34px', width: '39px' },
+			  { height: '54px', width: '19px' },
+			  { height: '83px', width: '75px' },
+			];
+			let heights = images.map((item, i) => {
+				console.log(i);
+				return item.height;	// plucking VALUES ONLY !!! from the height-prop. // return-keywork is VIMP in map !!!
+			}); 
+			console.log(heights); // [34px, 54px, 83px]
+		
+		Example 2: This is a gotcha example.
+			dot-notation vs square braces: note if u r trying to access a property using '' (characters) or strings, then better to use [] braces.
+			eg. 
+			var paints = [{color: 'red'}, {color: 'blue'}, {color: 'yellow'}];
+
+			function pluck(array, property) {
+				let arr = array.map((item) => {
+					return item[property];  // since it is passed as characters, better to use [] braces
+				});
+				console.log(arr);
+				return arr;
+			}
+
+			pluck(paints, 'color'); // color-property is passed as characters.
+
+	- filter 
+	>> has a return statement (which is boolean), but end output is the entire matched object. (not the plucked-values, like map)
+	>> use it to filter on obj-values in an AOO, or find an obj. in an array of objects (AOO)
+		>> return statement is required !!! .
+		>> map is used to "pluck values", whereas filter is used to get the entire object (in the array of objects), if one of the property matches our criteria
+		>> filter is based on a boolean being returned.
+			-- u can use && and add more conditions to the return value.
+		
+			let products = [
+			  {name:'product1', type:'electronic'},
+			  {name:'product2', type:'reuse'},
+			  {name:'product3', type:'reuse'},
+			  {name:'product4', type:'electronic'},
+			];
+
+			let filteredProds = products.filter((item, i)=>{
+			  return item.type === 'reuse' // return is required.
+			  // item.type === 'reuse'  // this will return an empty array []. (in map we used to get [undefined, undefined, etc. ] )
+			});
+
+			console.log (filteredProds);
+
+		>> Example 1: Find an obj in an array of objects.
+			let obj1 = { id: '4', name: 'obj1'};
+			let products = [
+			  {pid: '1', name:'product1', type:'electronic'},
+			  {pid: '2', name:'product2', type:'reuse'},
+			  {pid: '3', name:'product3', type:'reuse'},
+			  {pid: '4', name:'product4', type:'electronic'},
+			];
+			let findPid = (arrOfObj, id) => {
+			  return arrOfObj.filter((item, i)=>{	// return of the arrow function, u can take it in a variable n return too.
+				return item.pid === id			// return of the filter-method
+			  });
+			}
+			let pidProduct = findPid(products, obj1.id);
+			console.log(pidProduct);
+
+	- find 
+		>> similar to filter-function.
+		>> The find() method returns the first value that matches from the collection. Once it matches the value in findings, it will not check the remaining values in the array collection
+		
+	- every
+
+	- some 
+
+	- reduce 
+
+
+const/let 
+
+
+template strings 
+
+
+arrow functions 
+
+
+enhanced object literals 
+
+
+default function arguments 
+
+
+rest and spread operator 
+
+
+Destructuring 
+
+
+Classes 
+
+
+Generators 
+
+
+Promises 
+
+
+Fetch 
+
+
+Extras 
