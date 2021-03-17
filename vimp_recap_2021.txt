@@ -1,0 +1,392 @@
+
+String Interpolation:-
+{{ classvar }} // will be a class variable.
+{{ classmethod() }} // Works, but Dont do this as it will call it multiple times
+
+Property binding:-
+[disabled] = "some property name"
+
+String Interpolation can be replaced with property binding:-
+before:- <p> {{ someclassvar }} </p>
+after:- <p [innertext]="someclassvar"> </p>	DONT DO:- <p [innertext]="{{someclassvar}}"> </p>
+
+Event Binding:-
+	(click) = "callSomeMethod()"   // VanillaJS:- onClick = "doSomething()"
+Passing Data with EventBinding:-
+	(input) = "doSomething($event)" // $event will give access to data like clicked-details, etc.
+	where,
+		doSomething(ev: any) {
+			c.log( ev.target.value ); // where target shows the html-element on which the event occured.
+		}
+---
+ngIf, ngFor, ngStyle, ngClass, ngSwitch, ngModel, (ngSubmit) = doSubmit() [for both template n reactive form], ngForm
+
+<input ... ngModel name="email">
+<input ... ngModel name="email" #email="ngModel"> (for displaying custom errors)
+
+<div ... ngModelGroup="customKeyInNgFormObject"> </div>
+<div ... ngModelGroup="customKeyInNgFormObject" #customKeyInNgFormObject="ngModelGroup"> ... </div> (for displaying custom errors)
+
+Note:- (for displaying custom errors), u can use like email.invalid && email.touched, etc.
+---
+
+*ngIf = "someconditionevaluatesToTrue"
+*ngFor="let item of products"
+ngswitch = [ngSwitch] + *ngSwitchCase + *ngSwitchDefault 
+eg.
+	<ul *ngFor="let person of people"
+	    [ngSwitch]="person.country"> 
+
+	  <li *ngSwitchCase="'UK'" 
+	      class="text-success">{{ person.name }} ({{ person.country }})
+	  </li>
+	  <li *ngSwitchCase="'USA'"
+	      class="text-primary">{{ person.name }} ({{ person.country }})
+	  </li>
+	  <li *ngSwitchCase="'HK'"
+	      class="text-danger">{{ person.name }} ({{ person.country }})
+	  </li>
+	  <li *ngSwitchDefault 
+	      class="text-warning">{{ person.name }} ({{ person.country }})
+	  </li>
+	</ul>`
+
+ngModel: 2-way data binding = EventBinding + PropertyBinding
+[(ngModel)] = "somevar" + {{somevar}}
+Using ngModel is considered a better way, than to pass $event around. See doSomething($event) above.
+
+---
+ngIf and ngFor: Rabbits hole. (uses ng-template)
+
+1. *ngIf="someexpressionWhichReturnsTrue" eg. *ngIf="1===1" and it will work.
+2. ngIf + else.
+	>> semi-colon, else condition requires <ng-template> + local-reference
+	<p *ngIf="someexpression; else noServerCondition"> iftext1 </p>
+		<ng-template #noServerCondition> 
+			<p> elseText </p>
+		</ng-template>
+output:-  iftext1 is shown if condition is true, else elseText is shown.
+3. ngIf + then + else
+	>> semi-colon, then-condition && else-condition requires <ng-template> + local-reference
+	<p *ngIf="someexpression; then thenTemplate else elseTemplate"> iftext1 </p>
+		<ng-template #thenTemplate>ThenText1</ng-template>
+		<ng-template #elseTemplate>ElseText1</ng-template>
+output:-
+	if condition is true, thenTemplate is shown, else elsetemplate is shown.
+	NOTE:= iftext1 will NEVER BE shown. This is a gotcha. so be careful when using ngIg-then-else
+	
+---
+*ngIf deeper, *ngFor deeper
+
+1. <p *ngIf = "someconditionevaluatesToTrue"> </p>
+Angular does this:-
+   <ng-template	[ngIf] = "someconditionevaluatesToTrue">
+   	<p> ,,,, </p>
+   </ng-template>
+   Note:- [ngIfElse]="someotherconditiion"
+2.    
+<ul *ngFor="let item of products"> //NOTE: let is mandatory
+Angular does this internally:-
+  <ng-template ngFor let-item [ngForOf] = "products" let-i = "index">
+  	<p> .... </p>
+  </ng-template>
+
+Variations:-
+	<ul *ngFor="let item of products; let i = index"></ul>
+	<ul *ngFor="let item of products; index as i"></ul>
+	<ul *ngFor="let item of products; let i = index; let even = even; let odd=odd"></ul>
+  	<tr *ngFor="let employee of employees; trackBy: trackByEmpcode">
+	NOTE:- ngFor may perform poorly with large lists; recreating the whole table on small changes; this is bcoz angular doesnt know its dealing with the same obj. When trackBy is used, angular only does incremental changes to the DOM.
+---
+
+Q. How to create your own ngIf:- eg. myNgIf
+A.1. Use ViewContainerRef + ViewContainerRef::CreateEmbeddedView() + TemplateRef<obj|any>
+A.2. Use ng-container + ngTemplateOutlet + context-obj.
+
+A.1. 
+	ng g d myNgIf
+	constructor (
+		private  viewContainerRef: ViewContainerRef, private templateRef: TemplateRef<Object>
+	){}
+	ngOnInit(){
+		const condition = true;
+		if (condition ) { this.viewContainerRef.createEmbeddedView (this.templateRef); }
+		else { this.viewContainerRef.clear(); }
+	}
+
+	<p *myNgIf> ... </p> -OR- <ng-template myNgIf> </ng-template> (NOTE: no asterisk)
+	PS: We can add @Input to make RHS accept conditions.
+
+A.2.
+ng-container + ngTemplateOutlet + context-obj (helps with interpolation) + ng-template.
+
+2.1
+   Inside class have an obj ready 
+   	ctx = { estimate: 10}; // NOTE: if more than 1 properties, then more let-variables can be used.
+
+	<ng-container *ngTemplateOutlet="loadingTemplate; context: ctx"></ng-container>
+	<ng-template #loadingTemplate let-var1 = "estimate">
+		<p>loading {{ var1 }} pages ... </p>
+	</ng-template>
+>> ng-container is the table on which the template is laid and the context is interpolated into the template
+>> let-variables are in local template-context meaning, access to them is not available from outside.
+>> Note: if a let-variable does not have a RHS value assigned to it, then it latches up to $implicit; 
+	if more than one let-vars dont have RHS vallue, then all such let-vars are initialized to $implicit.
+	ctx = { estimate: 10}; can be rewritten as ctx = { $implicit: 'World' };
+>> *ngTemplateOutlet is of type TemplateRef<any>
+   *ngTemplateOutletContext is of type Object. (We may see this later in ultimate angular)
+---
+
+<p [ngStyle] = "{backgroundColor: getColor()}"
+   [ngClass] = "{somecsscolor: somevar === 'true' }"	> </p>
+   
+---
+Directives (selector) + Components (selector, template, styles, providers)
+@Input, @Output
+	eg.1. for Input:-
+		@Input() hero: Hero;	// =OR=
+  		@Input('master') masterName: string; // master is the alias for masterName and master will be used everywhere.
+	eg.2. for output:-
+	In some class
+		@Output() valueChange = new EventEmitter();
+		in some method:-
+			this.valueChange.emit(this.counter); // where counter is a class variable.
+
+=============================
+
+Types of component communication:-
+	1. Parent-to-child using @Input
+	2. Child-to-parent using @Output + EventEmitter
+	3. Child-to-parent using @Viewchild + ngAfterViewInit()
+		@ViewChild(ChildComponent) child; <<==== would be written in parent.
+		message:string;
+
+		ngAfterViewInit() {
+		   this.message = this.child.message
+		}
+	4. Unrelated Components/Subling Components: Sharing Data with a Service
+		To keep them in sync: use a global service-providers
+		To keep one of them out of sync: use a local service-providers in that comp., which needs to be out of sync
+		
+		https://angularfirebase.com/lessons/sharing-data-between-angular-components-four-methods/	
+		This is applicable for unrelated-parents/siblings.
+		
+		Why BehaviorSubject ?:-
+		> It will always return the current value on subscription - there is no need to call onnext
+		> It has a getValue() function to extract the last value as raw data.
+		> It ensures that the component always receives the most recent data.
+		
+		(may not work, put in here as a reference only.)
+		> Current message is available via subscription (of the asObservable()).
+		> New messages can be retrieved by calling .next();
+		
+		eg. 4.1. The service
+			@Injectable()
+				export class DataService {
+
+				  private messageSource = new BehaviorSubject('default message');
+				  currentMessage = this.messageSource.asObservable(); // NOTE:= currentmessage will be used to get curr. val.
+
+				  constructor() { }
+
+				  changeMessage(message: string) {
+					this.messageSource.next(message)
+				  }
+				  
+		4.2 Parent comp:-
+			ngOnInit() {
+				this.data.currentMessage.subscribe(message => this.message = message)
+			  }
+			  
+		4.3 Sibling comp:-
+			ngOnInit() {
+			  this.data.currentMessage.subscribe(message => this.message = message)
+			}
+
+			  newMessage() {
+				this.data.changeMessage("Hello from Sibling")
+			  }
+			  
+			  
+----
+
+@HostListener, @HostBinding, L88, 89 : used to create reactive directive
+	- use them with directives
+	HostListener: (from @angular/core) we can capture the events of the host-element (on which this directive sits).
+		In Directive's class:
+			ngOnInit(){ ... }
+			@HostListener('mouseenter') mouseover( eventData: Event ) {
+				this.renderer2.setStyle(this.elRef.nativeElement, 'background-color', 'blue', false, false);
+			}
+	HostBinding: Alternative to renderer.   we can specify style-properties of the host-element(on which this directive sits).	
+		- camelcase in 'style.backgroundColor' is VIMP!!!
+		- needs to be used with a HostListener
+		
+		In Directive's class:
+			@HostBinding('style.backgroundColor')tmpbackgroundColor: string;
+			@HostListener('mouseenter')mouseover( eventData: Event) {
+				this.renderer2.setStyle(this.elRef.nativeElement, 'background-color', 'blue', false, false);
+				this.tmpbackgroundColor = 'blue';
+			}
+			
+			
+====================================================================================================================
+Route and related topics begins
+----
+
+@Viewchild
+
+Renderer, Renderer2 :- Renderer2 is used to write mobile + desktop code. no separate code for mobile.
+
+RouterModule, Router, Routes, routerlinks, <router-outlet>, 
+Navigation Paths, Navigating Programmatically, Using relative paths in navigating programmatically, L120
+ActivatedRoutes, Passing Params to Routes, Fetching Route Params Reactively, Passing Query Params and Fragments, Common Gotchas (skipped)
+ChildRoutes, queryParamsHandling, Redirecting and Wildcarding Routes, LocationStrategy
+named router outlet 
+	AppModule:-	
+		import { RouterModule, Routes, Router, PreloadAllModules } from '@angular/router';
+		const appRoutes: Routes = [{}, {}]; // Its an array of objects.
+		
+		- routerLink replaces href in an <a href...> and help with NOT reloading the page; href reloads the page i.e. it sends a request to the server
+			[routerLink] = ['users']  // users is an absolute path.
+			[routerLink] = ['./users']  // users is an relative path.
+			You can use this relative syntax because routerLink is aware of which component u r currently on . Will give errors, if the path does not exist.
+			
+		- NavigationPaths:- if you use a relative path, then it becomes relative to the current comp (i.e. the component u are on).
+							use absolute paths, to prevent breaking ur routes, unknowingly.
+		- Navigating Programmatically:-  L120
+			-- this.router.navigate(['/servers']);  /servers is an absolute path. and router: Router
+		- Using relative paths in navigating programmatically, L121
+			-- this.router.navigate(['servers']);	//servers is a relative path.
+				// Unlike, routerLink, it WONT give errors, if the path does not exist. 
+				// This is because Router does NOT know which component u r currently on. This is the difference between Router and RouterLink
+		- To fix this use:- ActivatedRoute + optionsObj having relativeTo: route
+			import { ActivatedRoute } from '@angular/router';
+				route: ActivatedRoute
+					-- this.router.navigate(['servers'], {relativeTo: this.route});	//servers is a relative path.	
+
+		- Passing Params to Routes:
+				{ path: 'users/:id', component: 'UserComp' },
+				{ path: 'users/:id/:name', component: 'UserComp' },
+			- In UserComp::ngOnInit()
+				this.route.snapshot.params['id'], where route: ActivatedRoute
+				this.route.snapshot.params['name'], where route: ActivatedRoute
+		
+			this.route.snapshot.params should be used ONLY for 1-time loading. For subsequent changes, use this.route.params (see below) 
+		- Fetching Route Params Reactively
+			- the above approach may break sometimes
+			Problem eg.
+				<a [routerLink] = "['/users', 10, 'Anna']"> Load Anna </a>
+					>> The route changes, but the template does not change to reflect anna. (because Angular doesnt know the data in the template change)
+					
+			Solution :- 
+			import { ActivatedRoute, Params } from '@angular/router';	
+				// NOTE: this.route.params is an observable. 
+				this.route.params.subscribe(
+					params: Params {
+					this.templatevar1 = params['id']
+					this.templatevar2 = params['name']
+				})
+		- Passing Query Params and Fragments.		
+			QueryParams: eg. ?mode=editing&name=plankton
+			Fragments: eg. ?mode=editing#loading   (loading is a fragment)
+
+			Passing Query Params and Fragments.	
+			A.1.
+				{ path: 'servers/:id/edit', component: 'ServComp' },
+				+
+				<a 
+					[routerLink] = "['/servers', 5, 'Serv1']"
+					[queryParams] = "{ allowEdit: '1'}"
+					[fragment]="'loading'"
+				> Server1 </a>
+				
+				Use:- [fragment]="'loading'"  -OR- fragment="loading"   // both are the same
+				
+			A.2.
+				this.route.navigate(
+										['/servers', id, 'edit'],  // 1st param
+										{							// 2nd param is an options object
+											queryParams: {allowEdit: '1'},
+											fragment: 'loading'
+										}
+									)
+		- 	Retrieve Query Params and Fragments:
+				Retrieve using snapshot:- this.route.snapshot.queryParams -or- this.route.snapshot.fragment
+				Retrieving reactively:- this.route.queryParams.subscribe();
+										this.route.fragment.subscribe();
+										
+				Angular will unsubscribe automatically.
+		- Common Gotchas: 
+		- child routes: 
+			{ path: 'servers/:id/edit', component: 'ServComp' , children: [{}]},
+			and add a second <router-outlet></router-outlet>
+		
+		- queryParamsHandling: preserving queryParams when we navigate to another route.
+			this.router.navigate(['servers'], 
+									{relativeTo: this.route, queryParamsHandling: {'preserve'}
+								);
+			queryParamsHandling: {'preserve'}
+			queryParamsHandling: {'merge'}
+		- Redirecting and Wildcarding Routes	
+				{ path: 'not-found', component: 'NotFoundComp' },
+				{ path: '**', redirectTo: '/not-found' },   //NOTE:- its double **
+			
+		- LocationStrategy:-
+				RouterModule.forRoot(appRoutes, { useHash: true });
+				
+				This will be useful when we deploy on Apache/ which will parse the string before the #; whereas angular will parse after the #.
+		
+		- named router outlet 
+			https://www.concretepage.com/angular-2/angular-2-4-named-router-outlet-popup-example#navigate
+			app.component.html
+				<router-outlet></router-outlet>
+				<router-outlet name="green"></router-outlet>
+				<router-outlet name="red"></router-outlet>
+				
+			app-routing.module.ts
+				import { RouterModule, Routes } from '@angular/routes';
+				
+				const appRoutes: Routes {
+
+					{ path: 'color', component: 'colorcomp'},
+					{ path: 'green', component: 'greencomp', outlet: 'green'},
+					{ path: 'red', component: 'redcomp',  outlet: 'red'},
+					{ path: '', redirectTo: '/color', pathMatch: 'full'},					
+				}
+				
+				imports: [
+					RouterModule.forRoot( appRoutes )
+				],				
+				
+				exports: [ RouterModule ],  // this is very important because without this, u will get router-outlet unknown errors !!!
+			
+			ng g c red 
+			ng g c green
+			
+		- How to detect route changes? 
+		A. Subscribe to this.router.events . Events are like : // example: NavigationStart, RoutesRecognized, NavigationEnd
+			For more events look at: 
+				https://angular.io/api/router/RouterEvent
+			
+			https://toddmotto.com/dynamic-page-titles-angular-2-router-events 
+			https://stackoverflow.com/questions/33520043/how-to-detect-a-route-change-in-angular
+			this.router.events
+			  .subscribe((event) => {
+				if (event instanceof NavigationEnd) {
+				  console.log('NavigationEnd:', event);
+				}
+			  });			
+			
+		A.2. 
+		this.router.events
+			.filter(event => event instanceof NavigationEnd)
+			.map(() => this.activatedRoute)	// getting the activatedRoute at the end of NavigationEnd.
+			.map(route => route.firstChild)
+			.switchMap(route => route.data)
+			.map(data => data['asdf'])
+		
+---
+Route and related topics ends
+
+==============================================================================================================		
