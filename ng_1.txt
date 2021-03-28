@@ -1,0 +1,552 @@
+Observables vs Promises:- https://angular.io/guide/comparing-observables
+
+> Promises start immediately on creation. Observables are declarative; computation does not start until subscription.
+> Promises provide one value; Observables provide many values (over time).
+> Promises execute only once; Observables can be executed/subscribed repeatedly.
+> Promises are not cancellable; Observables are cancellable.
+
+> Promises cannot differentiate between chaining, it only uses .then() clauses. (Does not differentiate between last and intermediate .then() blocks)
+  Whereas, observables knows the difference between subscribe() and in-betweeners.	
+  Observables differentiate between chaining and subscription. Obsvs, thus help to create complex centralized pre-processing, 
+  without executing the actual work (until subscription).
+> Promises push errors to child promises, observables have subscribe(), which has inbuilt error-handling for centralized error handling.  
+
+----
+
+Module:
+	- @NgModule (declarations, imports, exports, providers, bootstrap, entryComponents) Note :- import is a TS-keyword, where imports:[] is an angular feature.
+				like exports.
+				
+----
+
+Summary:- const routes: Route = [] of objects.
+				Each object has: path, component, redirectTo (someComponent), pathMatch(full), children:[] (of paths) for nested routes.
+		
+----
+		
+- Registering routes to a feature module: L272
+		- Maintain import order in the imports:[] array in AppModule. 
+		- If routing is in an AppRoutingModule, it should be the last item in imports:[] array, so that all wildcards can be accounted for.
+		- create RecipesRoutingModule.
+			-- const recipesRoutes: Routes = [
+					{ path: 'new', component: 'Parent1', children: [
+							{ path: 'new', component: 'Comp1', canActivate: [AuthGuard] },
+							{ path: '', redirectTo: 'DefaultComp', pathMatch: 'full' },
+							{ path: ':id', component: 'Comp2' },
+						] // children ends.
+					}, // parent1 ends	
+				]; // recipesRoutes ends
+			-- NOTE:- RouterModule.forRoot() should ALWAYS be used in AppModule, RouterModule.forChild() should always be used in the child component.
+			-- 
+				@NgModule ({
+					imports:[
+						RouterModule.forChild(recipesRoutes)
+					],
+					exports: [RouterModule]			//<<<<===== NOTE how we are exporting from the current RecipesRoutingModule
+				})
+		- goto the feature module RecipesModule and add RecipesRoutingModule to the imports:[] array.
+		- the feature module RecipesModule will be in the AppModule::imports:[]
+	- Shared module
+		-- AppModule = FeatureModule1 + FeatureModule2
+						-- FM1 and FM2 uses SharedModule
+						
+---
+	In the route path object	
+			'children': child routes 
+			'loadChildren': for lazy loading.	- In chrome, network tab: disable caching is checked
+			
+			eagerly -vs- lazy loading 
+			- { path: 'recipes', component: RecipesModule }, // Before: EAGERLY LOADING
+			- { path: 'recipes', loadChildren: './recipes/recipes.module#RecipesModule', }, //After: LAZY LOADING.
+					IMPNOTE:- loadChildren takes a string, which of the format: '<path>#<ModuleName>' 
+					
+----
+	lazy loading with Auth Guard.
+	
+	eg. - { path: 'recipe', loadChildren: './recipes/recipe.module#RecipesModule', canLoad: [AuthGuard] }, 
+			Note: AuthGuard should implement the "canLoad" interface.
+			
+==================================
+
+- Understanding Modules & Service Injection (when using FMs and Lazy Loaded modules)
+		eg. 1. 
+		
+			AppModule (Serv1), providers: Serv1	
+			FM1 (Serv1), providers: Serv1
+			LLM1 (Serv1) , no providers for Serv1
+			Because, FM1 is injected into AppModule, using it at two places, wont hurt as the Root Injector will create ONLY one instance of the Serv1.
+			LLM1, since its lazy loaded will also use the same global instance of Serv1 (provided by the Root Injector).	
+			
+			- Since, AppModule and FM1 are eagerly loaded, it uses the global instance of Serv1
+			- Since no providers are used, LLM1 also uses the global instance of Serv1
+			
+		eg. 2. 	
+			AppModule (Serv1), providers: Serv1	
+			FM1 (Serv1), providers: Serv1
+			LLM1 (Serv1) , providers: Serv1
+			Here, LLM1, angular will create a child injector i.e. a local instance of Serv1.
+	
+			- Since, AppModule and FM1 are eagerly loaded, it uses the global instance of Serv1
+			- Since providers are used @ module level, LLM1 will use a local instance of Serv1.
+			
+		Q. In eg.1., can FeatureModule1 be forced to use a local instance of Serv1 ?
+		A. Yes, it can be done.
+			If FeatureModule1, needs to be forced to use a local instance of Serv1, Serv1 should be removed from FeatureModule1::providers[] 
+				and should be added to its child comp., say FMChild1::providers[]
+				
+		Q. In eg.1., 		
+			AppModule (Serv1), providers: Serv1	
+			FM1 (Serv1), providers: Serv1
+			SharedModule (Serv1), providers: Serv1
+			LLM1 (Serv1) , no providers for Serv1
+			(i.e. AppModule, FM1 and SharedModule are eagerly loaded)
+
+			- Here, SharedModule will have access to global instance of Serv1 
+			- LLM1 will NOT have global instance, it will have a local instance of Serv1. 
+			- So, be very careful when adding services to SharedModule !!!
+			
+			V. V.IMP:- DO NOT add services to shared modules, especially, if those services will be used in Lazy Loaded Modules !!!!
+
+Summary:- 		
+		1) V. V.IMP:- DO NOT add services to shared modules, especially, if those services will be used in Lazy Loaded Modules !!!!
+		2) If no providers are used, LLM1 also uses the global instance of Serv1, else if Serv1 is in LLM1's provider, local instance will be created.
+		
+		U should know both these, else u will create problems unknowingly.
+		
+=========================
+
+- Pre-Loading lazy loaded routes
+			- if LL, u will load the chunk of LLMs at that time, when the route is visited, so there may be a lag of few secs.
+			- it would be nice to use LL, but still pre-load the code, so that there is no lag.
+			
+			AppRoutingModule, where we define all our routes.
+			import { Routes, RouterModule, PreloadAllModules } from '@angular/router';
+
+			before:- RouterModule.forRoot(appRoutes)	// Hidden Default is { preloadingStrategy: DontPreload }		// ???
+			after:- RouterModule.forRoot(appRoutes, { preloadingStrategy: PreloadAllModules } // This property takes a type-definition. PreloadAllModules
+
+---
+
+No Preloading, PreloadingAllModules, Custom Preloading Strategy
+1)		   No Preloading: RouterModule.forRoot(appRoutes) // could result in few secs lag for LL route.
+2)  PreloadingAllModules: RouterModule.forRoot(appRoutes, { preloadingStrategy: PreloadAllModules }
+3)     Custom Preloading: RouterModule.forRoot(appRoutes, { preloadingStrategy: someCustomPreloadingClass } 
+						- where someCustomPreloadingClass "implements" the interface PreloadingStrategy 
+						- and defines a preload() method in the class definition.
+	eg. for 3) is below
+Pre-requisite:-
+
+	NOTE:- to pass "data" to a LL module use, data:{} property.
+	It takes an object.
+
+	eg. 
+	const appRoutes: Routes = [
+		{},
+		{},
+		{ path:'', 
+			data: { someproperty: true }, 
+			loadChildren: './employee/employee.module#EmployeeModule' 
+		}
+	];
+
+CustomPreloadingStrategy:-
+	export class someCustomPreloadingClass implements PreloadingStrategy{
+		preload(route: Route, fn : () => Observable<any>) : Observable<any> {
+			if(route.data && route.data['someproperty']){
+				return fn();
+			} else {
+				return of(null); // observable of null. return this, if someproperty is not set to true for that LL module.
+			}
+		}
+	}
+
+=========================
+
+UA: Advanced Routing: Debugging and Router Events (NavigationStart, RoutesRecognized and NavigationEnd)
+
+>> Tracing:
+	before:- RouterModule.forRoot( appRoutes );
+	after:-  RouterModule.forRoot( appRoutes, {enableTracing: true} );	// ONLY FOR DEBUGGING
+	
+	{enableTracing: true} shows us which routing events got fired. Use it ONLY FOR DEBUGGING
+		events can be like: NavigationStart, RoutesRecognized, NavigationEnd
+
+>> RoutesRecognized has "urlAfterRedirects" and state: RouterStateSnapshot.
+   NavigationEnd has "urlAfterRedirects"
+
+>> events can be accessed like this 
+		this.router.events.subscribe( (event) => { if(event instanceOf NavigationEnd) { // do something } 
+		});
+		-OR-
+		import 'rxjs/add/operators/filter';
+		this.router.events.filter( (event) => event instanceOf NavigationEnd ).subscribe( () => {}) 
+			// Now in subscribe we will get ONLY 1 event i.e. NavigationEnd
+			// This is MORE efficient, because subscribe will fire ONLY when it has NavigationEnd.
+
+>> Router Outlet Events
+	<router-outlet></router-outlet>
+	-OR-
+	<router-outlet
+		(activate) = "someMethodOnActivate($event)"		// $event will be some component. VVIMP !!!
+		(deactivate) = "someMethodOnDeactivate($event)"	// Called On destruction.
+	></router-outlet>
+
+>> Auxiliary / Named router outlet (Named router outlet not clear -- how to navigate to it using routerLink ? or how to navigate to it dynammically?
+	<router-outlet></router-outlet>					// primary outlet 
+	<router-outlet name="another"></router-outlet>  // sibling outlet
+	{
+		path: 'message/:id', component: HomeComponent, outlet: 'another'
+	}
+	
+>> 	// 1. navigating (to named outlet) using routerLink 
+	
+	<a [routerLink]="['', 
+					   {outlets: {pane: ['message', message.id] } }  //  eg. /message/1
+					  ]"
+		routerLinkActive = "active"	// there is a.active{} css style		  
+					  > </a> /// because the url is /inbox(pane:message/1); 1st param is empty cause it is relative.
+
+	-OR-
+	
+	// 2. navigating using API				  
+	this.router.navigate(
+		['', {outlets: {pane: ['message', message.id] } } ]
+	)
+	
+	// 3. Destroying auxiliary outlets
+	<a [routerLink]="[ { outlets: { primary: 'folder/inbox', pane : null } } ]" > ...
+	<a [routerLink]="[ { outlets: { primary: 'folder/trash', pane : null } } ]" > ...
+	
+	"pane: null" can also be used in navigation API i.e. this.router.navigate();
+	
+	resolve() can be used too with auxiliary routes (skipped)
+---
+
+PENDING: resolve() eg. needed and egs. for others needed too
+	
+=========================
+RouterModule, Router, Routes, routerlinks, <router-outlet>, 
+Navigation Paths, Navigating Programmatically, Using relative paths in navigating programmatically, L120
+ActivatedRoutes, Passing Params to Routes, Fetching Route Params Reactively, Passing Query Params and Fragments, Common Gotchas (skipped)
+ChildRoutes, queryParamsHandling, Redirecting and Wildcarding Routes, LocationStrategy
+named router outlet 
+
+routerLink -vs- Router -vs- ActivatedRoute 
+
+	AppModule:-	
+		import { RouterModule, Routes, Router, PreloadAllModules } from '@angular/router';
+		const appRoutes: Routes = [{}, {}]; // Its an array of objects.
+		
+		- routerLink replaces href in an <a href...> and help with NOT reloading the page; href reloads the page i.e. it sends a request to the server
+			[routerLink] = ['users']  // users is an absolute path.
+			[routerLink] = ['./users']  // users is an relative path.
+			You can use this relative syntax because routerLink is aware of which component u r currently on . Will give errors, if the path does not exist.
+			
+		- NavigationPaths:- if you use a relative path, then it becomes relative to the current comp (i.e. the component u are on).
+							use absolute paths, to prevent breaking ur routes, unknowingly.
+		- Navigating Programmatically:-  L120
+			-- this.router.navigate(['/servers']);  /servers is an absolute path. and router: Router
+		- Using relative paths in navigating programmatically, L121
+			-- this.router.navigate(['servers']);	//servers is a relative path.
+				// Unlike, routerLink, it WONT give errors, if the path does not exist. 
+				// This is because Router does NOT know which component u r currently on. This is the difference between Router and RouterLink
+		- To fix this use:- ActivatedRoute + optionsObj having relativeTo: route
+			import { ActivatedRoute } from '@angular/router';
+				route: ActivatedRoute
+					-- this.router.navigate(['servers'], {relativeTo: this.route});	//servers is a relative path.	
+					-- ??? {relativeTo: this.route} seems to be most imp, because it lets router:Router know on which path it is sitting on. ???
+					
+		- Passing Params to Routes: using route: ActivatedRoute
+				{ path: 'users/:id', component: 'UserComp' },
+				{ path: 'users/:id/:name', component: 'UserComp' },
+			- In UserComp::ngOnInit()
+				this.route.snapshot.params['id'], where route: ActivatedRoute
+				this.route.snapshot.params['name'], where route: ActivatedRoute
+			VVIMP --
+				this.route.snapshot.params should be used ONLY for 1-time loading. For subsequent changes, use this.route.params (see below) 
+				
+		- Fetching Route Params Reactively
+			- the above approach may break sometimes
+			Problem eg.
+				<a [routerLink] = "['/users', 10, 'Anna']"> Load Anna </a>
+					>> The route changes, but the template does not change to reflect anna. (because Angular doesnt know the data in the template change)
+					
+			Solution :- 
+			import { ActivatedRoute, Params } from '@angular/router';	
+				// NOTE: this.route.params is an observable. 
+				this.route.params.subscribe(
+					params: Params {
+					this.templatevar1 = params['id']
+					this.templatevar2 = params['name']
+				})
+				
+		-- Recap: route:ActivatedRoute 
+			1. this.route.snapshot.params['id']   // use for 1st loading.
+			2. this.route.params.subscribe(); // for checking values after 1st load.
+				
+		- Passing Query Params and Fragments.		
+			QueryParams: eg. ?mode=editing&name=plankton
+			Fragments: eg. ?mode=editing#loading   (loading is a fragment)
+
+			Passing Query Params and Fragments.	
+			A.1.
+				{ path: 'servers/:id/edit', component: 'ServComp' },
+				+
+				<a 
+					[routerLink] = "['/servers', 5, 'Serv1']"
+					[queryParams] = "{ allowEdit: '1'}"
+					[fragment]="'loading'"
+				> Server1 </a>
+				
+				Use:- [fragment]="'loading'"  -OR- fragment="loading"   // both are the same
+				
+			A.2.
+				this.route.navigate(
+										['/servers', id, 'edit'],  // 1st param
+										{							// 2nd param is an options object
+											queryParams: {allowEdit: '1'},
+											fragment: 'loading'
+										}
+									)
+		- 	Retrieve Query Params and Fragments:
+				Retrieve using snapshot:- this.route.snapshot.queryParams -or- this.route.snapshot.fragment
+				Retrieving reactively:- this.route.queryParams.subscribe();
+										this.route.fragment.subscribe();
+										
+				Angular will unsubscribe automatically.
+		- Common Gotchas: 
+		- child routes: 
+			{ path: 'servers/:id/edit', component: 'ServComp' , children: [{}]},
+			and add a second <router-outlet></router-outlet>
+		
+		- queryParamsHandling: preserving queryParams when we navigate to another route.
+			this.router.navigate(['servers'], 
+									{relativeTo: this.route, queryParamsHandling: {'preserve'}
+								);
+			queryParamsHandling: {'preserve'}
+			queryParamsHandling: {'merge'}
+		- Redirecting and Wildcarding Routes	
+				{ path: 'not-found', component: 'NotFoundComp' },
+				{ path: '**', redirectTo: '/not-found' },   //NOTE:- its double **
+			
+		- LocationStrategy:-
+				RouterModule.forRoot(appRoutes, { useHash: true });
+				
+				This will be useful when we deploy on Apache/ which will parse the string before the #; whereas angular will parse after the #.
+		
+		- named router outlet 
+			https://www.concretepage.com/angular-2/angular-2-4-named-router-outlet-popup-example#navigate
+			app.component.html
+				<router-outlet></router-outlet>
+				<router-outlet name="green"></router-outlet>
+				<router-outlet name="red"></router-outlet>
+				
+			app-routing.module.ts
+				import { RouterModule, Routes } from '@angular/routes';
+				
+				const appRoutes: Routes {
+
+					{ path: 'color', component: 'colorcomp'},
+					{ path: 'green', component: 'greencomp', outlet: 'green'},
+					{ path: 'red', component: 'redcomp',  outlet: 'red'},
+					{ path: '', redirectTo: '/color', pathMatch: 'full'},					
+				}
+				
+				imports: [
+					RouterModule.forRoot( appRoutes )
+				],				
+				
+				exports: [ RouterModule ],  // this is very important because without this, u will get router-outlet unknown errors !!!
+			
+			ng g c red 
+			ng g c green
+			
+		- How to detect route changes? 
+		A. Subscribe to this.router.events . Events are like : // example: NavigationStart, RoutesRecognized, NavigationEnd
+			For more events look at: 
+				https://angular.io/api/router/RouterEvent
+			
+			https://toddmotto.com/dynamic-page-titles-angular-2-router-events 
+			https://stackoverflow.com/questions/33520043/how-to-detect-a-route-change-in-angular
+			this.router.events
+			  .subscribe((event) => {
+				if (event instanceof NavigationEnd) {
+				  console.log('NavigationEnd:', event);
+				}
+			  });			
+			
+		A.2. 
+		this.router.events
+			.filter(event => event instanceof NavigationEnd)
+			.map(() => this.activatedRoute)	// getting the activatedRoute at the end of NavigationEnd.
+			.map(route => route.firstChild)
+			.switchMap(route => route.data)
+			.map(data => data['asdf'])
+		
+=========================
+
+JIT vs AOT. 
+	JIT: Angular has to parse and compile the templates to JS on the browser.
+		 Compiler is shipped. 
+	AOT: Do the parsing and compiling of templates before hand. No compiler is shipped
+			- ng build (uses JIT)
+			- ng build --prod (uses minification + JIT )
+			- ng build --prod --aot (uses minification + AOT)
+			- see dist folder and check sizes of all files.
+			
+========================
+
+========================
+Interceptors.
+	- import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+	- someClass implements HttpInterceptor + define the ===> intercept (req: HttpRequest<any>, next: HttpHandler } <=== method.
+	- clone the request and add ur key value pain in the header params.
+
+
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+app.module.ts
+	imports: [ HTTP_INTERCEPTORS, HttpClientModule, n other modules ]
+	providers: [
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: MyHttpInterceptor,
+			multi: true
+		}
+	]
+	
+.ts
+import { Injectable, Injector } from '@angular/core';
+import { HttpClient, HttpInterceptor, HttpRequest, HttpHandler } from '@angular/common/http';
+
+export class MyHttpInterceptor implements HttpInterceptor: Observable<HttpEvent<any>> {
+	intercept (req: HttpRequest<any>, next: HttpHandler) {
+		console.log("intercepted request ... ");
+
+		// Clone the request to add the new header.
+		const authReq = req.clone({ headers: req.headers.set("headerName", "headerValue")});
+		console.log("Sending request with new header now ...");
+		
+		//send the newly created request
+		return next.handle(authReq)
+				   .catch((error, caught) => {
+						//intercept the respons error and displace it to the console
+						console.log("Error Occurred");
+						console.log(error);
+						//return the error to the method that called it
+						return Observable.throw(error);
+					}) as any;
+	}
+} // class ends
+
+
+========================================================
+
+Pipes: 
+
+Summary:-
+	- class implements "PipeTransform" + transform() method. it can take param1, param2. etc,
+	- u can add a pipe in the providers:[] and call it programmatically too. eg. this.filesizePipe.transform( somevar, 'mb');
+	few examples:-
+		{{ text | shorten:5 }}
+		{{ text | shorten:15:2ndparam }} // param1 and param2 will be argument2 and argument3 in the transform() method.
+	- pure pipes are default. efficient. but angular doesn't trigger them everytime data changes. in order to trigger them the object-ref should change.
+			So use pure pipes + Object.assign().
+	  impure pipes are inefficient as they are memory intensive and run every time.
+	
+Pure, PipeTransform, impurepipe, async pipe
+	// default pipes: date, json 
+	
+	Create custom pipe:-
+		filesize.pipe.ts 
+			import { Pipe, PipeTransform } from '@angular/core';
+			
+			@Pipe({
+				name: 'filesize'
+			})
+			export class FileSizePipe implement PipeTransform {
+				transform( ipvalue: number, extension: string = 'MB' ) {
+					return ( size/ (1024*1024)).toFixed(2)) + extension
+				}
+			} // class ends 
+			
+			{{ data | filesize: 'megabytes' }}  // if megabytes is no given as extension, default MB kicks in
+
+	Pipes as providers/services:- transform() method is the key.
+		In SomeComp:-
+			import { FileSizePipe } ...
+			providers: [ FileSizePipe ];
+			
+			constructor (
+				private filesizePipe: FileSizePipe;
+			){}
+		
+		
+			// NOW WE CAN USE transform():- this.filesizePipe.transform( somevar, 'mb');
+
+few examples:-
+{{ text | shorten:5 }}
+{{ text | shorten:15:2ndparam }} // param1 and param2 will be argument2 and argument3 in the transform() method.
+*ngFor = "let server of servers | filter: filteredStatus: 'status'	
+	(filteredString is ngModel and is a class var too)
+	('status' is a column)
+
+Creating a filter pipe:- (Pure vs Impure Pipe)
+eg. u have a table of contents and u want to search some content in it:-
+ ng g p filter
+ 	... 
+	transform ( value: any, filteredString: string): any {
+		if (value.length === 0 || filterString === '') {
+			return value;
+		}
+ 	}
+
+>> angular is NOT re-running the pipe when the data changes. (thanksfully).
+	When ur data (in arrays / objects changes), then angular will not rerun the pipe.
+>> if u add a space to the filteredString, then it will start showing the new changes.
+This is because, changing the input of the pipe (param1 i.e. filteredString) will trigger angular to rerun the pipe.
+
+The reason such a filtering condition exists is because, there is a high performance cost. (pure: true by default)
+If u still wanted the pipe to re-run when the data changes, we have to create an impure pipe:-	
+		pure: false;
+	if u make the pipe impure, then it will respond to data changes.
+
+---
+Asyncpipe
+| async 
+	> if an observable, it auto subscribes and unsubscribes
+	> if a promise, then it watches the promise object and if the promise returns a string, it will display that string.
+		someclassVar = new Promise ( (resolve, reject) => {
+			...
+		});
+		
+----
+xtra gyan:-
+
+<p> {{'Hello' | translate }}<p>
+<p> {{'World' | translate }}<p>
+If pipe is pure: there will be only one instance of the pipe. The transform method will be called twice but on the same instance.
+If pipe is impure: there will be two instances of the pipe.
+(you can see this by generating a random id in the constructor of the pipe and print it in both: constructor and transform method)
+
+
+==============================
+
+GUARDS
+
+Guards L135
+	- CanActivate, CanActivateChild, CanDeactivate, CanLoad, Resolve
+
+	- canActivate
+		{ path: 'comp', component: 'SomeComp', canActivate: [AuthGuard] },
+
+		@Injectable()
+		export class AuthGuard implements canActivate {
+			// 2 I/p params: route: ActivatedRouteSnapshot, state: RouterStateSnapshot from '@angular/router'. Angular will give us this data.
+			// O/p: Observable<boolean> | Promise<boolean> if async, boolean if ran synchronously.
+
+			canActivate( route: ActivatedRouteSnapshot, state: RouterStateSnapshot ) : Observable<boolean> | Promise<boolean> | boolean {
+				// check if user is logged in.
+			}
+		} // class ends
+		
+==============================
