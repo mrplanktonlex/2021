@@ -1,0 +1,117 @@
+Ultimate angular:-
+Summary:-
+ Single vs Multi slot 	<ng-content></ng-content> in the html of the comp . 
+ Multi slot eg. <ng-content select = "h3"></ng-content>
+				<ng-content select = "somestyleclass"></ng-content>
+				<ng-content select = "somecustomcomp"></ng-content>
+ Elements within <somecomp></somecomp> are its private shadom DOM
+ If 1 slot, then to access them programmatically, use ContentChild + ngAfterContentInit
+	syntax is like @ViewChild 
+		@ContentChild(childcomp) someVar: childcomp
+		u can access it using this.someVar inside ngAfterContentInit
+ If more slots, then to access them programmatically, use ContentChildren + QueryList + ngAfterContentInit
+	syntax is like @ViewChild 
+		@ContentChildren(childcomp) someVar: QueryList<childcomp>
+		u can access it using this.someVar inside ngAfterContentInit
+ ViewChild and ngAfterViewInit 
+ ViewChildren and ngAfterViewInit  
+		
+- Content Projection n its types
+	ng-content :- to form pieces of the form. 
+		eg.1. simple ng-content
+			AppComp: 		
+						<auth-form () = "" <h3>Create Account<h3> ></auth-form>
+						<auth-form () = "" <h3>Login<h3> ></auth-form>
+			AuthFormComp: Put <ng-content></ng-content> as placeholder, to show where the h3 should be inserted.
+		
+		eg.2. ng-content with projection/injection slots. (same for login)
+			AppComp: 		
+						<auth-form () = "" <h3>Create Account<h3> 
+										   <button type="submit">Join Us</button>
+						></auth-form>
+						
+			AuthFormComp: 
+						<ng-content select="h3"></ng-content>		where it requires to be projected/injected
+						<ng-content select="button"></ng-content>	where it requires to be projected/injected
+
+			Do same for Login
+			
+		eg.3. Content-project a component & bind to it 
+			AuthRemember:
+			AppComp: 
+						<auth-form (submitted) = "loginuser($event)" <h3>Login<h3> 
+										   <auth-remember (checked) = "rememberUser($event)></auth-remember>
+										   <button type="submit">Login</button>
+						></auth-form>	
+			checked is of EventEmitter
+			
+			AuthFormComp: 
+						<ng-content select="h3"></ng-content>
+						<ng-content select="auth-remember"></ng-content>						
+						<ng-content select="button"></ng-content>	
+						
+			Note:= we can also use <ng-content select = ".somecssclass"	> </ng-content>		
+			Binding can be done using class-var.
+			
+		eg.4. @ContentChild and ngAfterContentInit
+			In eg.3., h3, auth-remember and button are contentchild of auth-form 
+			
+			AuthFormComp:
+				
+				In its template:-
+						<ng-content select="h3"></ng-content>
+						<ng-content select="auth-remember"></ng-content>						
+						<div *ngIf="showMessage"> 
+							You will be logged in for 30 days.
+						</div>
+						<ng-content select="button"></ng-content>	
+			
+				import { AuthRememberComp } from '';  // We r importing, so that we can query it after the content has been initialized.
+				import { ContentChild, AfterContentInit} ... 
+				
+				@ContentChild(AuthRememberComp) remember: AuthRememberComp ;
+				
+				ngAfterContentInit() {
+					if(this.remember) {
+						this.remember.checked.subscribe( (checked: boolean) => {
+							this.showMessage = checked;
+						});
+					}
+				}
+			
+			
+		eg.5. @ContentChildren and QueryLists
+				
+				AppComp: 
+			
+						<auth-form (submitted) = "loginuser($event)" <h3>Login<h3> 
+										   <auth-remember (checked) = "rememberUser($event)></auth-remember>
+										   <auth-remember (checked) = "rememberUser($event)></auth-remember>
+										   <auth-remember (checked) = "rememberUser($event)></auth-remember>
+										   <button type="submit">Login</button>
+						></auth-form>
+			
+			
+				import { ContentChildren, QueryList, AfterContentInit} ... 
+				@ContentChildren(AuthRememberComp) remember: QueryList<AuthRememberComp> ;
+			
+				ngAfterContentInit() {
+					if(this.remember) {
+						this.remember.forEach( (item) => {
+							item.checked.subscribe( (checked:boolean) => this.showMessage = checked; );
+						});
+					}
+				}
+			
+			
+		eg.6. ViewChild and ngAfterViewInit 
+		
+				AuthMessageComp: 
+					<div *ngIf="showMessage"> 
+							You will be logged in for 7 days.
+						</div>
+						
+				Pending.		
+					
+		eg.7. ViewChildren and ngAfterViewInit 	
+			
