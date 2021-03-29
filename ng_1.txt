@@ -550,3 +550,78 @@ Guards L135
 		} // class ends
 		
 ==============================
+Guards: canActivate, canActivateChild, canDeactivate, canLoad, resolve . All the guards have their own interfaces.
+	    eg. 
+		canDeactivate has interface CanDeactivate
+		canActivate has interface CanActivate ... n so on.
+		
+
+canDeactivate : guards navigation away from the route.
+canActivate: Guard navigation to a route
+canActivateChild: Guard navigation to a child route.
+canLoad (for LL): Guard navigation to a FM loaded lazily / asynchronously
+resolve: Perform route data retrieval before route activation. vimp.
+
+3 steps:
+1. Build the route guard 
+2. Register the guard with angular dependency injection system (i.e. in @NgModule)
+3. Tie the guard to a route. 
+
+---
+	eg.
+	
+	import { CanDeactivate } from '@angular/router';	// rightclick and copy paste definition of CanDeactivate, which is canDeactivate() with a lower C.
+	@Injectable()
+	export someClass implements CanDeactivate {
+		canDeactivate(component){
+			return true/false;
+		}
+	}
+
+	+
+	
+	within ur routing module, for the path in question add "canDeactivate: [someClass]"
+	
+---
+
+	import { CanActivate } from '@angular/router';
+	@Injectable()
+	export someClass implements CanActivate {
+		CanActivate(component){
+			return true/false;
+		}
+	}
+	
+	+
+	
+	"canDeactivate: [someClass]" in the route in question
+	
+---
+NOTE; canActivate and canDeactivate both can return boolean/obs.of boolean/promise of boolean.
+--- 
+
+kudvenkat: https://www.youtube.com/watch?v=Dm1OpX42Aho
+
+	import { Resolve } from '@angular/router';
+	@Injectable()
+	export SomeGuardService implements Resolve {
+		Resolve(component){
+			return observableOfData;
+		}
+	}
+	
+	+ 
+	
+	path: '/'
+	component: 'someComp'
+	"resolve : {employeeList: SomeGuardService}" in the route in question 	<===== VIMP, RHS is an obj, unlike CanActivate and CanDeactivate where RHS is []
+	
+	+ 
+	
+	VIMP: In someComp, u can access the resolver's data using ActivatedRoute like this:
+		this.route.snapshot.data['employeeList'] <<==== LHS object-key defined in "resolve"
+		where route:ActivatedRoute.
+		
+---
+
+===============================
