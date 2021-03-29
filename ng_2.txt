@@ -1,4 +1,4 @@
-Ultimate angular:-
+Ultimate angular:- ViewChild, ViewChildren, ContentChild, ContentChildren -- lifecycle hook: ngAfterViewInit, ngAfterContentInit, ngAfterViewChecked, ngAfterContentChecked
 Summary:-
  Single vs Multi slot 	<ng-content></ng-content> in the html of the comp . 
  Multi slot eg. <ng-content select = "h3"></ng-content>
