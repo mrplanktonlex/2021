@@ -1,0 +1,28 @@
+1) BUBBLE SORT
+
+// xtra Info: always use function expression !!! and live-server on visual studio code !!!
+
+// bubble-sort: 
+// step 1: if arr[i] > arr[i+1], then swap. implement the swap function. in below eg. bubble_sort() has the swap function. (Sorts in ASC order)
+// step 2: keep doing above for n-1 passes, that is arr.lenngth - 1
+
+
+let bubble_sort = function(tmpArr){
+    for(let j = 0; j < tmpArr.length - 1; j++){     // passes: n-1. 
+        for(let i = 0; i < tmpArr.length; i++){
+            if (tmpArr[i] > tmpArr[i+1]){
+            let big = tmpArr[i];
+            tmpArr[i] = tmpArr[i+1];
+            tmpArr[i+1] = big; 
+            } 
+        } // for ends
+    }
+    console.log('----', tmpArr);
+}
+
+let arr = [0, 1, 101, 102, 10, 3, 4, 20, 40, 2];
+bubble_sort(arr);
+
+-----------------------------------
+
+2) INSERTION SORT
