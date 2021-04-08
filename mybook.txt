@@ -1,0 +1,39 @@
+Event Bubbling eg.
+
+1) 
+
+ <div id="div1" onclick="handleDiv1()" style="border: 15px solid red">
+  <div id="div2" onclick="handleDiv2()" style="border: 15px solid green">
+    <div id="div3" onclick="handleDiv3()" style="border: 15px solid blue">
+      <button id="btn1" onclick = "handleButton()">Click me!</button>
+    </div>
+  </div>
+</div>
+
+// JS
+
+let handleButton = function(){
+  // event.target == the exact html element
+  console.log('--button clicked--',  typeof(event.target), Object.keys(event.target), Object.values(event.target));  // Object, [], [] 
+  console.log(event.target.tagName, event.target.nodeName, event.target.id); // BUTTON, BUTTON, btn1 (make sure id is mention in html-element)
+}
+
+let handleDiv3 = function(){
+  console.log('--div3 triggered--', event.target.id);   
+}
+// VIMP: when div3 is clicked, all methods handleDiv3(), handleDiv2(), handleDiv1() will have "div3" in event.target.id.
+// so event.target.id is not reliable.
+
+let handleDiv2 = function(){
+  console.log('--div2 triggered--', event.target.id);
+}
+
+let handleDiv1 = function(){
+  console.log('--div1 triggered--', event.target.id);
+}
+
+---
+
+AddEventListener (3rd param is useCapture) -vs- hard-coded onclick, onmouseout, etc. 
+
+
