@@ -30,3 +30,19 @@ eg.2. function (for) Interface
   console.log(_myVehicle('Honda'));
   
 eg. 3. 
+      // eg.3. class implementing an interface. 
+      interface Veh {
+        model: string, 
+        company?: string;  // make it optional, else error
+      };
+
+      class desiCar implements Veh {
+        model : string; // all props in interface has to be here, except optional ones
+
+        constructor(p1){
+          this.model = p1;
+        }
+      }
+
+      let obj1 = new desiCar('Maruti');
+      console.log(obj1);
