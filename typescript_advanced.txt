@@ -1,0 +1,32 @@
+interfaces -vs- types
+
+Interface:
+  - user keyword "interface"
+  - no equalto sign, so no LHS/RHS 
+  - try naming them beginning with i / I 
+  >> typos can be prevented by using interfaces.
+  
+eg.1. // replit uname: mrjnsn, passwd: ki...
+      // constant using Interface
+      
+  interface iPerson { fname: string, lname: string}
+  interface iAdmin extends iPerson { loginId: string}
+
+  const superUser1: iAdmin = { fname: 'jenson', lname: 'samuel', loginId: 'getjs' }; // works
+  console.log(superUser1, superUser1.lname);
+
+  const superUser2: iAdmin = { fname: 'jenson', lname: 'samuel' }; // ERROR as EXPECTED for loginId-property.
+  console.log(superUser2);
+  
+eg.2. function (for) Interface
+  // - write interface with func decl.
+  // - write the function def. using interface 
+  // - execute the function.
+
+  interface Vehicle {
+    (name: string ): string; // function def: LHS is param, RHS is return type
+  }
+  const _myVehicle: Vehicle = (name) => 'My Vehicle is: ' + name;
+  console.log(_myVehicle('Honda'));
+  
+eg. 3. 
