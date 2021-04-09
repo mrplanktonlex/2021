@@ -6,6 +6,7 @@ Interface:
   - try naming them beginning with i / I 
   >> typos can be prevented by using interfaces.
   
+---
 eg.1. // replit uname: mrjnsn, passwd: ki...
       // constant using Interface
       
@@ -17,7 +18,8 @@ eg.1. // replit uname: mrjnsn, passwd: ki...
 
   const superUser2: iAdmin = { fname: 'jenson', lname: 'samuel' }; // ERROR as EXPECTED for loginId-property.
   console.log(superUser2);
-  
+
+---
 eg.2. function (for) Interface
   // - write interface with func decl.
   // - write the function def. using interface 
@@ -28,7 +30,8 @@ eg.2. function (for) Interface
   }
   const _myVehicle: Vehicle = (name) => 'My Vehicle is: ' + name;
   console.log(_myVehicle('Honda'));
-  
+
+--- 
 eg. 3. 
       // eg.3. class implementing an interface. 
       interface Veh {
@@ -46,3 +49,29 @@ eg. 3.
 
       let obj1 = new desiCar('Maruti');
       console.log(obj1);
+
+
+---
+
+eg. 4.
+
+// eg.4. Declaration Merging  
+    interface x {
+      k1: string,
+      k2: string 
+    }
+    interface x { 
+      k3: string
+    }
+    class A implements x {
+      k1: string ;
+      k2: string; 
+      k3: string; 
+      constructor(p1, p2, p3){
+        this.k1 = p1;
+        this.k2 = p2;
+        this.k3 = p3;
+      }
+    }
+    let objA = new A ('v1', 'v2', 'v3');
+    console.log(objA);  // A { k1: 'v1', k2: 'v2', k3: 'v3' }
