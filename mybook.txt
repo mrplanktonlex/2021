@@ -59,6 +59,93 @@ obj1.print();
 
 ==========
 
+Currying:-
+		let parentFunc1 = (p1) => {
+		  console.log('parentFunc1', p1);
+		  return function(p2){
+		  console.log('returnFunc1', p2);
+			return function(p3){
+		  console.log('returnFunc2', p3);
+			}
+		  }
+		}
+		//1. call it all in one go
+		parentFunc1(10)(2)(1);
+		//2. call it in partial-application 
+		console.log('+++++');
+		let x = parentFunc1(10)(2);
+		x(222);
+
+---
+
+Method Chaining: 1) using 1 Promise with multiple then()s, 
+				 2) using Promise returning Promise2 returning Promise 3,
+				 3) using Func1 returning Promise1,
+				 
+	//1. method chaining:- using ONLY 1 promise.
+		 let someCondition = true;
+		 let p1 = new Promise((resolve, reject)=>{
+		   return someCondition? resolve('parentFunc1 resolved'): reject('parentFunc1 rejected');
+		 });
+
+		 p1.then((result)=>{
+		  console.log('111', result);
+		   return result; // VIMP.
+		}).then((result) => {
+		  console.log('222', result);
+		  return result; // CIMP
+		});
+
+	//2. method chaining: promise1 return promise2. 
+		 let pro1 = new Promise((res1, rej1)=>{
+		   res1('111');
+		 });
+
+		 pro1.then((result)=>{
+		   console.log(result);
+			  return new Promise((res2, rej2)=>{
+			  res2('222');
+		   });
+		}).then((result)=>{
+		   console.log(result);
+			  return new Promise((res3, rej3)=>{
+			   res3('333');
+			  });
+		 }).then((result)=>{
+			  console.log(result);
+			  console.log('finished');
+		 });
+
+	//3. method chaining #2:- function-which-returns-promises 
+		 let someCondition2 = false;
+		 let f1 = () => {
+		   return new Promise((resolve, reject)=>{
+			 someCondition2 ? resolve('Promise Resolved') : reject('Promise Reject'); 
+		   }); 
+		 };
+
+		 // f1 has to executed. 
+		f1().then((result)=>{
+		   console.log(result, '111');
+		   return result; // have to return if u want next .then 
+		 }).then((result)=>{
+		   console.log(result, '222');
+		 }).finally(()=>{
+		   console.log('Promise logic ends');
+		 });
+
+
+	// 4: using function as class. 
+		let func1 = function(){   // (VIMP:= note wrapper function should be function() and not arrow function.)
+		  this.one = () => { console.log('one'); return this; }
+		  this.two = () => { console.log('two'); return this; }
+		  this.three = () => { console.log('three'); return this; }
+		};
+		  
+		let obj1 = new func1();
+		obj1.one().two().three();
+
+==========
 
 Event Bubbling eg.
 
