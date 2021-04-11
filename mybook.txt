@@ -1,3 +1,65 @@
+============
+
+CALL, APPLY and BIND in JS.
+
+// 1. call : function calls outside object. (VIMP: outside object can be function too, since functions are objects in JS)
+// var obj = { num : 2 };
+// var addToThis = function(a){
+//   return this.num + a; // using outside obj's prop/val within.
+// }
+// console.log(addToThis.call(obj, 3));
+
+// 2. apply 
+// var obj = { num : 2 };
+// var addToThis = function(a, b, c){
+//   return this.num + a + b + c; // using outside obj's prop/val within.
+// }
+// console.log(addToThis.call(obj, 3, 1, 1)); // -OR- use apply
+// let arr = [3, 1, 1];
+// console.log(addToThis.apply(obj, arr)); 
+
+// 3. bind
+var obj = { num : 2 };
+var addToThis = function(a, b, c){
+  return this.num + a + b + c; // using outside obj's prop/val within.
+}
+let bound = addToThis.bind(obj); // No params. just the outside object.
+console.log(bound(3, 1,1));
+
+==========
+
+PROTOTYPE inheritance in POJO:-  https://codepen.io/mr_jnsn/pen/vYgdGBZ?editors=0011 
+
+// Parent class
+let Job = function(){
+  this.pays = true;
+};
+Job.prototype.print = function(){
+  console.log('printing in base class');
+}
+
+// Subclass
+let Techjob = function(title, pays){
+  Job.call(this);     ///<<<==== VIMP1.
+  this.title = title;
+  this.pays = pays;
+}
+Techjob.prototype = Object.create(Job.prototype); ///<<<==== VIMP2
+Techjob.prototype.constructor = Techjob;          ///<<<==== VIMP3. circular reference to itself.
+
+// Uncomment below lines, then base class method WONT be called !!!
+// Techjob.prototype.print = function(){    // So method overriding is possible. If subclass has its own implementation of print(), then subclass version will be call, else if not present, then the parent class's version will be called.
+//   console.log('printing in sub class');
+// }
+
+let obj1 = new Techjob('JS', true);
+obj1.print();
+
+// Note method overloading is NOT possible in sub class, but method overriding is possible
+
+==========
+
+
 Event Bubbling eg.
 
 1) 
