@@ -1,0 +1,205 @@
+Angular Basics
+
+1) Directives : Component Directives, Structural Directives, Attribute Directives, Custom Directives. 
+	1.1) Component Directives:- @Component({}) , selector:'', template:'', style: '', templateUrls: './a.html', styleUrls: ['./a.css']
+			ng generate component AComp 
+			ng g c AComp 
+			ng g c AComp --flat (--flat is for No folder creation)
+	1.2) Structural Directives:- *ngIf, *ngFor, *ngSwitch. 
+	1.3) Attribute Directives:- 
+			>> ngModel (2-way data binding)
+			
+	1.4) Custom Directives:
+			ng g d ADirective 
+			>> class with @Directive({
+					selector: '[appSomeDirective]' // square braces are vimp !!! [] braces indicate attribute directive.
+												   // angular adds the app-prefix
+				})
+					+ use it in html
+					+ in constuctor, use ElementRef and use nativeElement to set color as red.
+			
+2) Pipes: 
+	@Pipe({})
+		default is pure pipe. U should use it. GOTCHA: if data changes, then final reference to that data should also change. (eg. using Object.assign)
+		
+		
+3) Angular Services
+	- singleton service using @Injectable()
+		ng g service AServ
+		ng g service AServ --skipTests = true 
+		import { Injectable } from '@angular/core';
+		@Injectable({
+			providedIn: 'root'
+		})
+	- service using service 
+		Component1 uses Service2 ( providers[] lists Service2 ) --> Service2 uses Service1, but Services do not have providers[] array.
+			Comp1 -> Serv2 -> Serv1 
+			- Comp1 uses Serv2 in providers[]., but angular complains as it is not able to find Serv1. 
+			- Solution: Serv1 add it in ngModule's providers:[] array, so that it becomes singleton.
+	- component using service 
+	- providers:[] (local within component -vs- global)
+
+
+4) HTTPClient
+	app.module.ts
+		import {HTTPClientModule} from '@angular/common/http';
+			+ 
+		add HTTPClientModule in imports[] array of NgModule
+
+	app.component.ts
+		import { HTTPClient } from '@angular/common/http';
+			+
+		constuctor(http: HTTPClient){}
+			+
+		ngOnInit(){
+			this.http.get("....")
+		}
+
+5) Angular Module: 
+	@NgModule({
+		declarations:[],
+		imports:[],
+		exports:[], // used in FM.
+		providers:[],
+		entryComponents:[],
+		bootStrap: [AppComponent]
+	})
+	
+---
+Note: !!! Both @Input() and @Output() are done on the childComp. !!!
+6) 6.1) @Input: Parent-to-child communication.	
+			ChildComp: @Input() dataInputForChild: string.
+			ParentComp: <childComp [dataInputForChild] = "someData" ></childComp>
+   6.2) @Output: Child-to-parent communication.
+			ParentComp: 
+					
+					<childComp [dataInputForChild] = "someData"
+						(someNewEvent) = "classMethodInParent1($event)  // NOTice: someNewEvent is same name as "@output() someNewEvent."
+					> </childComp	
+			
+			childComp: 
+					@Output() someNewEvent = new EventEmitter<string>();
+					In some class method:- 
+						this.someNewEvent.emit(childdataToBeEmmitted);
+			
+   
+   6.3) Renderer2 / Ivy Renderer.	(typically used in directives)
+		Renderer:
+			>> used within a directive to set styles eg. setElementStyle()
+			>> directive's contructor has an ElementRef eg. constructor(el: ElementRef). U can get nativeElement from it. eg.
+			Few egs.: (if used within constructor, then no this-keyword).
+					this.el.nativeElement
+					this.el.nativeElement.setElementStyle(...)
+					this.el.nativeElement.querySelector('.someCssClass')
+
+				this.renderer.setElementStyle(<anyNativeElement>, 'display', 'block'>)	// nativeElement is derived from an ElementRef
+				this.renderer.setElementStyle(<anyNativeElement>, 'backGroundColor', 'Gray'>)
+   
+   6.4 & 6.5: Respond to events on the Host Element the directive sits on.
+   6.4) @HostListener	(Host: means on which the directive sits). VIMP: Used in a directive.
+		@HostListener('JSeventname') methodname(){}
+		eg. @HostListener('mouseover') somemethod1(){}
+			@HostListener('mouseout') somemethod1(){}
+		
+   6.5) @HostBinding	(Host: means on which the directive sits). VIMP: Used in a directive.
+		>> within the directive, use a boolean, its true on "mouseover" and false on "mouseout" event. Events use @HostListener('<eventname>')
+		>> @HostBinding('someClassClass') private isHovering: boolean = false;
+		
+		   @HostListener('mouseover') somemethod1(){
+			...
+			this.isHovering = true;
+		   }
+		   
+		   @HostListener('mouseout') somemethod2(){
+			...
+			this.isHovering = false;
+		   }
+		   
+		>> NOTE: HostBinding used typically along with HOstListener.
+		   
+   
+---
+
+7) Angular Decorators: 
+	- @NgModule, @Component({}), @Directive({}), @Injectable(), @Input(), @Output
+	
+	Xtra knowledge on DI Hierarchies:-	https://www.youtube.com/watch?v=uVGnsmm9g-I
+	DI Hierachies:- (We saw a glimpse in service using service).
+		1) Element Injector Hierarchy:  SomeComp -> Serv2 -> Serv1 (mapping between Serv2 and Serv1 not found by angular). Goto Module Injector Hierachy below.
+		2) Module Injector Hierarchy: RootInjector(non-lazy @ngModule/@injectable()) -> PlatformModule (platformBrowserDynamic()) -> NullInjector -> Error (Serv1 not found)
+				RootModuleInjector eg is 'providedIn': root 
+				
+		- Param Decorators:  @Optional(), @Skip, @SkipSelf, @Host. (Also called resolution modifiers??)
+				2.1) @Optional() 
+					>> remove 'providedIn': root from the service, so Rooot Module Injector is empty and NullInjector throws an error.
+					>> Serv1 without 'providedIn': root. Comp1 uses Serv1. Error from NullInjector.
+					>> In Comp1, use Serv1 with @Optional() and now wedont have any NullInjector error.
+						constructor( @Optional() private serv1: LoggerService}{
+							if (this.serv1) { ... // do something ... }
+						}
+				2.2) @Self() In Comp1, (Also called "self resolution modifiers")
+					import { Optional, Self } from '@angular/core');
+					+ 
+					Service is Serv1 with 'providedIn': root 
+					+
+					constructor( private serv1: LoggerService}{
+							if (this.serv1) { ... // do something ... }
+					}
+				// everything works till now. But if u add @Self like constructor( @Self() private serv1: LoggerService}{...}
+					u will get error from NodeInjector.
+					This is because, @Self stops DI bubbling and tries to resolve all dependecies within itself within the providers:[] of Comp1 
+					
+				2.3) @SkipSelf() : will get the parent instance of the service. will skip local instance.
+				2.4) @Host(): Stop the DI Bubbling on the Host-element on which the child directive sits .
+					Given:-
+						Comp1: providers: [Service1]
+						ParentDirective: providers : [Service1]
+						ChildDirective: no providers, but uses serv1: Service1. 
+					
+						and 
+						in Comp1 
+							<div parentDirective>
+								<div childDirective>
+								</div>
+							</div>
+					
+					Default behavior: Because no Service1 found in childDirective, angular checks in parentDirective, if not found, then in Comp1.
+					@Host behavior: In childDirective 
+									constructor ( @Host() serv1: Service1 ){}
+					
+								Because no Service1 found in providers in childDirective, angular checks in parentDirective, then it will stop.
+								It WONT goto Comp1 !!!. 
+								If still not found in parentDirective, it will give NodeInjector error.
+	- Custom Decorator. 	
+		npm install typescript -g
+		cd src/App/
+		tsc --experimentalDecorators some.decorator.ts 
+		tsc --experimentalDecorators some.decorator.ts --lib es2015
+		node some.decorator.js 
+		
+		>> create a class.
+		>> create a function with Object.defineProperty()
+		>> ... n watch utube. (pending)
+		
+---
+
+8) Content Projection
+    - @ViewChild, @ViewChildren, @ContentChild, @ContentChildren.
+
+---
+
+9) Life Cycles :
+	- constructor, ngOnInit, ngOnChanges, ngDestroy.
+	- Related to content projection + change detection viz., view and content:-
+		>> ngAfterViewInit, ngAfterContentInit, ngAfterViewChecked, ngAfterContentChecked	// view init, content init, view checked, content checked
+		
+---
+	eg. for ngOnChanges() 
+
+--- 
+
+Some weird things :
+	>> <p> [style.display] = "'none'"
+	
+---
+
