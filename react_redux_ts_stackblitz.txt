@@ -1,0 +1,49 @@
+render() method. 
+{} is used to interpolate variables, call class-methods on click, stylevariables, etc.
+
+---
+
+Style in react.
+
+>> Define .testClassOne in style.css && import styles.css using "import './styles.css' (in index.tsx)
+>> <p className="testClassOne"> in render() function in index.tsx
+
+  See https://stackblitz.com/edit/react-ts-reduxeg1?file=index.tsx 
+
+---
+
+method2: Style Variables 
+
+    const styleHelloTwo = {
+      border: `2px solid red`,  // notice the ``
+      padding: `5px`
+    };
+
+    export const HelloTwo = ( props ) => ( <div style={styleHelloTwo}> {props.msg} </div> );
+
+=====
+
+stackblitz:
+  - search for dependencies in "dependencies"
+  - "redux" and "react-redux" is required.
+  
+---
+
+Parent to Child Communication: 
+1) Using props. props is inbuilt.
+   In parent::render()
+                  <p>
+                    <somechild msg="hi" ></somechild>
+                    <somechild msg={this.state.msg} ></somechild>
+                  </p>
+      and in somechild
+              export const HelloTwo = ( props ) => { return <div> {props.msg} </div> }
+              -OR-
+           // export const HelloTwo = ( props ) => ( <div> {props.msg} </div> ); // remove {} curly braces + return-keyword and instead put only round () braces for oneliners.
+---
+
+---
+
+=====
+
+
