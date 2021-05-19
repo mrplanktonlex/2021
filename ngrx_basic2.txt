@@ -18,6 +18,7 @@ https://stackblitz.com/edit/angular-ngrxtest221 		Problem of scalability. Proble
 				
 Solution:-        
 Solution is available in this URL: https://stackblitz.com/edit/angular-ngrxtest222
+				   https://stackblitz.com/edit/angular-ngrxtest223 (actionreducermaps/ can further remove the clutter in app.module.ts)	
 	actions/actionsindex.ts 
 		export * from './hello.action';		// hello.action should not have multiple exports, but one "export {} " statement 
 		export * from './hi.action';		// hi.action should not have multiple exports, but one " export {} " statement 
@@ -27,3 +28,5 @@ Solution is available in this URL: https://stackblitz.com/edit/angular-ngrxtest2
 	reducers/reducersindex.ts 
 		export * from './hello.reducer';
 		export * from './hi.reducer';
+
+
