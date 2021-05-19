@@ -1,0 +1,29 @@
+Actions (ALL_ACTIONS/HELLO_ACTIONS/HI_ACTIONS), Reducers, ActionReducerMap
++
+IMP: How to use actionsindex.ts and reducersindex.ts which will export all actions and all reducers respectively .
+
+Problem:-
+https://stackblitz.com/edit/angular-ngrxtest221 		Problem of scalability. Problem eg. 
+	// create hi.action.ts and hi.reducer.ts 
+	// add them to app.module.ts and app.component.ts 
+	
+	NOTE: app.module.ts and app.component.ts are having a lot of import-statements.
+	      and as we begin to add more and more actions and reducers, these files will have a lot lot of import statements. 
+		  so, we need to have a wrapper file like this
+				actions/
+				actions/index.ts (which will export all *.actions.ts files)
+				
+				reducers/
+				reducers/index.ts (which will export all *.reducer.ts files)
+				
+Solution:-        
+Solution is available in this URL: https://stackblitz.com/edit/angular-ngrxtest222
+	actions/actionsindex.ts 
+		export * from './hello.action';		// hello.action should not have multiple exports, but one "export {} " statement 
+		export * from './hi.action';		// hi.action should not have multiple exports, but one " export {} " statement 
+			(Also see hello.action.ts)
+			(Also see hi.action.ts)
+
+	reducers/reducersindex.ts 
+		export * from './hello.reducer';
+		export * from './hi.reducer';
