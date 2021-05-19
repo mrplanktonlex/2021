@@ -1,0 +1,86 @@
+https://stackblitz.com/edit/angular-ngrxtest22
+	// hello-comp is irrelevant 
+	// create hello.action.ts 
+		string const + action-class + type ALL_ACTIONS (each Action-class implementing Action-Interface will need a type-property )
+	// create hello.reducer.ts 
+	
+	
+	1) hello.action.ts 
+		import { Action } from '@ngrx/store';
+
+		// 1.
+		export const actionOneStr = 'ActionOne';
+		export class ACTION_ONE_STR implements Action {
+		  readonly type = actionOneStr; // Action is an interface with "type" prop
+		}
+
+		// 2.
+		export const actionTwoStr = 'ActionTwo';
+		export class ACTION_TWO_STR implements Action {
+		  readonly type = actionTwoStr; // Do not confuse this with Utility types
+		}
+
+		// 3.
+		// Note: it is a "type". ALL_ACTIONS will be used in interface state
+		// in ActionReducerMap.
+		export type ALL_ACTIONS = ACTION_ONE_STR | ACTION_TWO_STR;
+
+		
+	2) hello.reducer.ts 
+		import { State, Action } from '@ngrx/store';
+		import { ALL_ACTIONS } from './hello.action';
+
+		// 1.
+		export function helloReducer(state, action: Action) {
+		  console.log('hello reducer called');
+		  return { ...state };
+		}
+
+		// 2. below will be required when app increases
+		// // 2.1. define interface
+		// interface IInitState {
+		//   firstName: string;
+		//   lastName: string;
+		// }
+
+		// // 2.2. prepare default values
+		// const InitialState: IInitState = {
+		//   firstName: 'Jenson',
+		//   lastName: 'Samuel'
+		// };
+
+		// export function helloReducer(state: IInitState, action: Action) {
+		//   return { state };
+		// }
+
+	3) app.module.ts 
+		// 3. ActionReducerMap requires an interface
+		export interface HelloState {
+		  helloAnyKey: ALL_ACTIONS;			// note the LHS prop helloAnyKey is only for this file.
+		}
+
+		// 2.
+		export const reducers: ActionReducerMap<HelloState> = {
+		  helloAnyKey: helloReducer								// any console.log within helloReducer will be triggered.
+		};
+	
+		imports: [ ...,  // 1.
+			StoreModule.forRoot(reducers)] 
+			
+			
+	4) app.component.ts 
+		import { ACTION_ONE_STR, ALL_ACTIONS, actionOneStr } from './hello.action';
+		
+		constructor(private store: Store) {}
+		  ngOnInit() {
+			this.doSomething();
+		  }
+
+		 doSomething() {
+			// dispatch an action.
+			// this.store.dispatch({ type: 'ActionOne' }); // works
+			// this.store.dispatch({ type: actionOneStr }); // works
+			// this.store.dispatch({ type: ALL_ACTIONS.type }); // wont work !!
+		  }
+		  
+		  
